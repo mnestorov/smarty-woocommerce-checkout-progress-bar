@@ -1,5 +1,10 @@
 #smarty-cpb {
     margin-bottom: 20px;
+    background: rgba(223, 240, 216, .2);
+    padding: 10px;
+    font-weight: bold;
+    border: 2px dashed var(--brdcolor-gray-300);
+    border-radius: var(--wd-brd-radius);
 }
 
 #smarty-cpb .smarty-cpb-info-text {

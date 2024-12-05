@@ -1,31 +1,47 @@
 jQuery(document).ready(function ($) {
-    function updateProgressBar(cartTotal) {
-        const freeDeliveryThreshold = parseFloat(wcProgressBar.free_delivery_threshold);
-        const freeGiftThreshold = parseFloat(wcProgressBar.free_gift_threshold);
-        const progress = Math.min(100, (cartTotal / freeGiftThreshold) * 100);
+    function updateProgressBar() {
+        const freeDeliveryThreshold = parseFloat($('#smarty-cpb').data('free-delivery'));
+        const freeGiftThreshold = parseFloat($('#smarty-cpb').data('free-gift'));
 
-        $(".progress-bar-fill").css("width", progress + "%");
+        let cartTotal = 0;
 
-        if (cartTotal >= freeDeliveryThreshold) {
-            $(".tick:first").addClass("achieved");
+        // Try to get cart total from the page
+        if ($('.woocommerce-cart-form').length) {
+            // On Cart page
+            cartTotal = parseFloat($('.order-total .woocommerce-Price-amount bdi').first().text().replace(/[^0-9.-]+/g, ''));
+        } else if ($('.woocommerce-checkout-review-order-table').length) {
+            // On Checkout page
+            cartTotal = parseFloat($('.order-total .woocommerce-Price-amount bdi').first().text().replace(/[^0-9.-]+/g, ''));
         } else {
-            $(".tick:first").removeClass("achieved");
+            // Fallback
+            cartTotal = parseFloat($('.woocommerce-Price-amount bdi').first().text().replace(/[^0-9.-]+/g, ''));
         }
 
+        if (isNaN(cartTotal)) {
+            cartTotal = 0;
+        }
+
+        const remainingToFirstGift = Math.max(freeDeliveryThreshold - cartTotal, 0).toFixed(2);
+        const progress = Math.min((cartTotal / freeGiftThreshold) * 100, 100);
+
+        $('.smarty-cpb-progress-bar-fill').css('width', progress + '%');
+        $('.remaining-amount').text(`$${remainingToFirstGift}`);
+
+        // Update ticks
+        $('.tick').removeClass('achieved');
+        if (cartTotal >= freeDeliveryThreshold) {
+            $('.tick:eq(1)').addClass('achieved');
+        }
         if (cartTotal >= freeGiftThreshold) {
-            $(".tick:last").addClass("achieved");
-        } else {
-            $(".tick:last").removeClass("achieved");
+            $('.tick:eq(2)').addClass('achieved');
         }
     }
 
     // Initial load
-    const initialCartTotal = parseFloat(wc_cart_params.total);
-    updateProgressBar(initialCartTotal);
+    updateProgressBar();
 
     // Update on cart changes
-    $(document.body).on("updated_cart_totals", function () {
-        const cartTotal = parseFloat($(".woocommerce-Price-amount bdi").text().replace(/[^0-9.-]+/g, ""));
-        updateProgressBar(cartTotal);
+    $(document.body).on('updated_cart_totals updated_checkout', function () {
+        updateProgressBar();
     });
 });
