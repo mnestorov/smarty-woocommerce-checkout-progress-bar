@@ -229,7 +229,7 @@ if (!function_exists('smarty_cpb_progress_bar_shortcode')) {
                         <i class="dashicons dashicons-marker"></i>
                         <span>
                             <strong class="remaining-amount"><?php echo sprintf('$%0.2f', $remaining_to_first_gift); ?></strong><br>
-                            <?php echo esc_html__('more to the first Gift', 'smarty-woocommerce-checkout-progress-bar'); ?>
+                            <?php echo esc_html__('to the first Gift', 'smarty-woocommerce-checkout-progress-bar'); ?>
                         </span>
                     </div>
 
