@@ -42,6 +42,11 @@ if (!function_exists('smarty_cpb_enqueue_public_scripts')) {
      * @return void
      */
     function smarty_cpb_enqueue_public_scripts() {
+        // Check if the plugin is enabled
+        if (get_option('smarty_cpb_enable_progressbar', '1') !== '1') {
+            return;
+        }
+
         global $post;
 
         // Enqueue Bootstrap Icons
@@ -72,7 +77,7 @@ if (!function_exists('smarty_cpb_register_settings')) {
      * @return void
      */
     function smarty_cpb_register_settings() {
-        register_setting('smarty_cpb_settings_group', 'smarty_cpb_enable_labels', array(
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_enable_progressbar', array(
             'type'              => 'string',
             'sanitize_callback' => function($value) {
                 return $value === '1' ? '1' : '0';
@@ -107,13 +112,13 @@ if (!function_exists('smarty_cpb_register_settings')) {
         );
 
         add_settings_field(
-            'smarty_cpb_enable_labels', 
+            'smarty_cpb_enable_progressbar', 
             __('Disable/Enable', 'smarty-woocommerce-checkout-progress-bar'),
             'smarty_cpb_checkbox_field_cb', 
             'smarty_cpb_settings', 
             'smarty_cpb_general_section', 
             array(
-                'id' => 'smarty_cpb_enable_labels'
+                'id' => 'smarty_cpb_enable_progressbar'
             )
         );
         
@@ -313,8 +318,8 @@ if (!function_exists('smarty_cpb_general_section_cb')) {
 
 if (!function_exists('smarty_cpb_checkbox_field_cb')) {
     function smarty_cpb_checkbox_field_cb($args) {
-        $option = get_option($args['id'], '');
-        $checked = checked(1, $option, false);
+        $option = get_option($args['id'], '1'); // Retrieve saved value or default to '1'
+        $checked = checked(1, $option, false); // Check if the option value is '1'
         echo "<label class='smarty-toggle-switch'>";
         echo "<input type='checkbox' id='{$args['id']}' name='{$args['id']}' value='1' {$checked} />";
         echo "<span class='smarty-slider round'></span>";
@@ -583,6 +588,11 @@ if (!function_exists('smarty_cpb_progress_bar_shortcode')) {
      * @return string HTML for the progress bar.
      */
     function smarty_cpb_progress_bar_shortcode() {
+        // Check if the plugin is enabled
+        if (get_option('smarty_cpb_enable_progressbar', '1') !== '1') {
+            return ''; // Or return a message like: return '<p>Progress bar is disabled.</p>';
+        }
+        
         // Get settings
         $gift_one_text = get_option('smarty_cpb_gift_one_text', 'Gift One');
         $gift_two_text = get_option('smarty_cpb_gift_two_text', 'Gift Two');
