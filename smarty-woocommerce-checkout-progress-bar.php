@@ -72,7 +72,51 @@ if (!function_exists('smarty_cpb_register_settings')) {
      * @return void
      */
     function smarty_cpb_register_settings() {
-        // General Section
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_enable_labels', array(
+            'type'              => 'string',
+            'sanitize_callback' => function($value) {
+                return $value === '1' ? '1' : '0';
+            },
+            'default' => '1'
+        ));
+        
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_info_text');
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_all_rewards_text');
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_gift_one_text');
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_gift_two_text');
+
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_info_text_font_size');
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_icon_size');
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_icon_text_font_size');
+        
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_info_text_color');
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_progress_fill_color');
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_icon_achieved_color');
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_icon_not_achieved_color');
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_icon_text_color');
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_icon_text_achieved_color');
+        
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_gift_one_threshold');
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_gift_two_threshold');
+
+        add_settings_section(
+            'smarty_cpb_general_section', 
+            __('General', 'smarty-woocommerce-checkout-progress-bar'),
+            'smarty_cpb_general_section_cb', 
+            'smarty_cpb_settings'
+        );
+
+        add_settings_field(
+            'smarty_cpb_enable_labels', 
+            __('Disable/Enable', 'smarty-woocommerce-checkout-progress-bar'),
+            'smarty_cpb_checkbox_field_cb', 
+            'smarty_cpb_settings', 
+            'smarty_cpb_general_section', 
+            array(
+                'id' => 'smarty_cpb_enable_labels'
+            )
+        );
+        
         add_settings_section(
             'smarty_cpb_texts_section',
             __('Texts', 'smarty-woocommerce-checkout-progress-bar'),
@@ -202,6 +246,15 @@ if (!function_exists('smarty_cpb_register_settings')) {
             array('id' => 'smarty_cpb_icon_text_color', 'default' => '#4caf50')
         );
 
+        add_settings_field(
+            'smarty_cpb_icon_text_achieved_color',
+            __('Icon Text (Achieved)', 'smarty-woocommerce-checkout-progress-bar'),
+            'smarty_cpb_color_input_cb',
+            'smarty_cpb_settings',
+            'smarty_cpb_colors_section',
+            array('id' => 'smarty_cpb_icon_text_achieved_color', 'default' => '#4caf50')
+        );
+
         add_settings_section(
             'smarty_cpb_thresholds_section',
             __('Thresholds', 'smarty-woocommerce-checkout-progress-bar'),
@@ -226,24 +279,6 @@ if (!function_exists('smarty_cpb_register_settings')) {
             'smarty_cpb_thresholds_section',
             array('id' => 'smarty_cpb_gift_two_threshold', 'default' => 200)
         );
-
-        register_setting('smarty_cpb_settings_group', 'smarty_cpb_info_text');
-        register_setting('smarty_cpb_settings_group', 'smarty_cpb_all_rewards_text');
-        register_setting('smarty_cpb_settings_group', 'smarty_cpb_gift_one_text');
-        register_setting('smarty_cpb_settings_group', 'smarty_cpb_gift_two_text');
-
-        register_setting('smarty_cpb_settings_group', 'smarty_cpb_info_text_font_size');
-        register_setting('smarty_cpb_settings_group', 'smarty_cpb_icon_size');
-        register_setting('smarty_cpb_settings_group', 'smarty_cpb_icon_text_font_size');
-        
-        register_setting('smarty_cpb_settings_group', 'smarty_cpb_info_text_color');
-        register_setting('smarty_cpb_settings_group', 'smarty_cpb_progress_fill_color');
-        register_setting('smarty_cpb_settings_group', 'smarty_cpb_icon_achieved_color');
-        register_setting('smarty_cpb_settings_group', 'smarty_cpb_icon_not_achieved_color');
-        register_setting('smarty_cpb_settings_group', 'smarty_cpb_icon_text_color');
-        
-        register_setting('smarty_cpb_settings_group', 'smarty_cpb_gift_one_threshold');
-        register_setting('smarty_cpb_settings_group', 'smarty_cpb_gift_two_threshold');
     }
     add_action('admin_init', 'smarty_cpb_register_settings');
 }
@@ -267,6 +302,23 @@ if (!function_exists('smarty_cpb_settings_page_content')) {
             </form>
         </div>
         <?php
+    }
+}
+
+if (!function_exists('smarty_cpb_general_section_cb')) {
+    function smarty_cpb_general_section_cb() {
+        echo '<p>Enable or disable checkout progress bar for the site.</p>';
+    }
+}
+
+if (!function_exists('smarty_cpb_checkbox_field_cb')) {
+    function smarty_cpb_checkbox_field_cb($args) {
+        $option = get_option($args['id'], '');
+        $checked = checked(1, $option, false);
+        echo "<label class='smarty-toggle-switch'>";
+        echo "<input type='checkbox' id='{$args['id']}' name='{$args['id']}' value='1' {$checked} />";
+        echo "<span class='smarty-slider round'></span>";
+        echo "</label>";
     }
 }
 
@@ -341,16 +393,74 @@ if (!function_exists('smarty_cpb_number_input_cb')) {
     }
 }
 
-if (!function_exists('smarty_cpb_admin_styles')) {
-    function smarty_cpb_admin_styles() {
-        echo '
-        <style>
-            input[type="range"] {
-                width: 300px;
-            }
-        </style>';
+if (!function_exists('smarty_cpb_admin_css')) {
+    function smarty_cpb_admin_css() { 
+        if (is_admin()) { ?>
+            <style>
+                 input[type="range"] {
+                    width: 300px;
+                }
+
+                /* The switch - the box around the slider */
+                .smarty-toggle-switch {
+                    position: relative;
+                    display: inline-block;
+                    width: 60px;
+                    height: 34px;
+                }
+
+                /* Hide default HTML checkbox */
+                .smarty-toggle-switch input {
+                    opacity: 0;
+                    width: 0;
+                    height: 0;
+                }
+
+                /* The slider */
+                .smarty-slider {
+                    position: absolute;
+                    cursor: pointer;
+                    top: 0;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    background-color: #ccc;
+                    transition: .4s;
+                    border-radius: 34px;
+                }
+
+                .smarty-slider:before {
+                    position: absolute;
+                    content: "";
+                    height: 26px;
+                    width: 26px;
+                    left: 4px;
+                    bottom: 4px;
+                    background-color: white;
+                    transition: .4s;
+                    border-radius: 50%;
+                }
+
+                input:checked + .smarty-slider {
+                    background-color: #2196F3;
+                }
+
+                input:checked + .smarty-slider:before {
+                    transform: translateX(26px);
+                }
+
+                /* Rounded sliders */
+                .smarty-slider.round {
+                    border-radius: 34px;
+                }
+
+                .smarty-slider.round:before {
+                    border-radius: 50%;
+                }
+            </style><?php
+        } 
     }
-    add_action('admin_head', 'smarty_cpb_admin_styles');
+    add_action('admin_head', 'smarty_cpb_admin_css');
 }
 
 if (!function_exists('smarty_cpb_public_css')) {
@@ -370,6 +480,7 @@ if (!function_exists('smarty_cpb_public_css')) {
         $icon_text_color = get_option('smarty_cpb_icon_text_color', '#888');
         $icon_color_achieved = get_option('smarty_cpb_icon_achieved_color', '#4caf50');
         $icon_color_not_achieved = get_option('smarty_cpb_icon_not_achieved_color', '#cccccc');
+        $icon_text_achieved_color = get_option('smarty_cpb_icon_text_achieved_color', '#4caf50');
         $progress_fill_color = get_option('smarty_cpb_progress_fill_color', '#4caf50');
 
         // Inline CSS
@@ -387,6 +498,10 @@ if (!function_exists('smarty_cpb_public_css')) {
                 color: {$text_color};
                 text-align: center;
                 margin-bottom: 10px;
+            }
+
+            .smarty-cpb-info-text span {
+                color: {$icon_text_achieved_color} !important;
             }
 
             #smarty-cpb .smarty-cpb-wrapper {
@@ -421,10 +536,14 @@ if (!function_exists('smarty_cpb_public_css')) {
                 color: {$icon_color_achieved};
             }
 
-            #smarty-cpb .smarty-cpb-progress-icons .icon span {
+            #smarty-cpb .smarty-cpb-progress-icons .icon span.gift-text {
                 font-size: {$icon_text_font_size}px;
                 color: {$icon_text_color};
                 margin-top: -5px;
+            }
+
+            #smarty-cpb .smarty-cpb-progress-icons .icon.achieved span.gift-text {
+                color: {$icon_text_achieved_color};
             }
 
             #smarty-cpb .smarty-cpb-progress-bar {
@@ -465,12 +584,10 @@ if (!function_exists('smarty_cpb_progress_bar_shortcode')) {
      */
     function smarty_cpb_progress_bar_shortcode() {
         // Get settings
-        $gift_one_text = get_option('smarty_cpb_gift_one_text', 'Free Shipping');
-        $gift_two_text = get_option('smarty_cpb_gift_two_text', 'Free Gift');
+        $gift_one_text = get_option('smarty_cpb_gift_one_text', 'Gift One');
+        $gift_two_text = get_option('smarty_cpb_gift_two_text', 'Gift Two');
         $all_rewards_text = get_option('smarty_cpb_all_rewards_text', 'Congratulations! You have unlocked all rewards!');
         $progress_fill_color = get_option('smarty_cpb_progress_fill_color', '#4caf50');
-        $icon_color_achieved = get_option('smarty_cpb_icon_achieved_color', '#4caf50');
-        $icon_color_not_achieved = get_option('smarty_cpb_icon_not_achieved_color', '#cccccc');
 
         // Get thresholds
         $gift_one_threshold = floatval(get_option('smarty_cpb_gift_one_threshold', 100));
@@ -484,11 +601,10 @@ if (!function_exists('smarty_cpb_progress_bar_shortcode')) {
         $remaining_to_gift_two = max($gift_two_threshold - $cart_total, 0);
 
         // Determine the info text
-        $info_text = '';
         if ($cart_total < $gift_one_threshold) {
-            $info_text = sprintf('Add %s to unlock %s!', wc_price($remaining_to_gift_one), $gift_one_text);
+            $info_text = sprintf('Add <span>%s</span> to unlock %s!', wc_price($remaining_to_gift_one), $gift_one_text);
         } elseif ($cart_total < $gift_two_threshold) {
-            $info_text = sprintf('Add %s to unlock %s!', wc_price($remaining_to_gift_two), $gift_two_text);
+            $info_text = sprintf('Add <span>%s</span> to unlock %s!', wc_price($remaining_to_gift_two), $gift_two_text);
         } else {
             // Use the dynamic text from the plugin settings
             $info_text = esc_html($all_rewards_text);
@@ -513,13 +629,13 @@ if (!function_exists('smarty_cpb_progress_bar_shortcode')) {
                     <div class="icon achieved">
                         <span>&nbsp;</span>
                     </div>
-                    <div class="icon <?php echo $cart_total >= $gift_one_threshold ? 'achieved' : ''; ?>">
+                    <div class="icon gift-one <?php echo $cart_total >= $gift_one_threshold ? 'achieved' : ''; ?>">
                         <i class="bi bi-truck"></i>
-                        <span><?php echo esc_html($gift_one_text); ?></span>
+                        <span class="gift-text"><?php echo esc_html($gift_one_text); ?></span>
                     </div>
-                    <div class="icon <?php echo $cart_total >= $gift_two_threshold ? 'achieved' : ''; ?>">
+                    <div class="icon gift-two <?php echo $cart_total >= $gift_two_threshold ? 'achieved' : ''; ?>">
                         <i class="bi bi-gift"></i>
-                        <span><?php echo esc_html($gift_two_text); ?></span>
+                        <span class="gift-text"><?php echo esc_html($gift_two_text); ?></span>
                     </div>
                 </div>
             </div>

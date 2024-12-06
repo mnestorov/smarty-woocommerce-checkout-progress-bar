@@ -9,27 +9,31 @@ jQuery(document).ready(function ($) {
 
         let cartTotal = 0;
 
-        // Try to get cart total from the page
-        if ($('.woocommerce-cart-form').length) {
-            cartTotal = parseFloat($('.order-total .woocommerce-Price-amount bdi').first().text().replace(/[^0-9.-]+/g, ''));
-        } else if ($('.woocommerce-checkout-review-order-table').length) {
-            cartTotal = parseFloat($('.order-total .woocommerce-Price-amount bdi').first().text().replace(/[^0-9.-]+/g, ''));
+        // Get cart total from checkout or cart page
+        if ($('.woocommerce-checkout-review-order-table').length) {
+            // Checkout page
+            cartTotal = parseFloat($('.order-total .woocommerce-Price-amount bdi').first().text().replace(/[^0-9.]+/g, ''));
+        } else if ($('.woocommerce-cart-form').length) {
+            // Cart page
+            cartTotal = parseFloat($('.order-total .woocommerce-Price-amount bdi').first().text().replace(/[^0-9.]+/g, ''));
         }
 
         if (isNaN(cartTotal)) {
             cartTotal = 0;
         }
 
+        // Calculate remaining amounts
         const remainingToGiftOne = Math.max(giftOneThreshold - cartTotal, 0).toFixed(2);
         const remainingToGiftTwo = Math.max(giftTwoThreshold - cartTotal, 0).toFixed(2);
 
+        // Determine the info text
         let infoText = '';
         if (cartTotal < giftOneThreshold) {
-            infoText = `Add $${remainingToGiftOne} to unlock ${giftOneText}!`;
+            infoText = `Add <span style="color: ${smartyCpbSettings.giftOneColor};">$${remainingToGiftOne}</span> to unlock ${giftOneText}!`;
         } else if (cartTotal < giftTwoThreshold) {
-            infoText = `Add $${remainingToGiftTwo} to unlock ${giftTwoText}!`;
+            infoText = `Add <span style="color: ${smartyCpbSettings.giftTwoColor};">$${remainingToGiftTwo}</span> to unlock ${giftTwoText}!`;
         } else {
-            infoText = allRewardsText;
+            infoText = `<span style="color: ${smartyCpbSettings.allRewardsColor};">${allRewardsText}</span>`;
         }
 
         // Update the progress bar
@@ -37,9 +41,9 @@ jQuery(document).ready(function ($) {
         $('.smarty-cpb-progress-bar-fill').css('width', progress + '%');
 
         // Update the info text
-        $('.smarty-cpb-info-text').text(infoText);
+        $('.smarty-cpb-info-text').html(infoText);
 
-        // Update icons and ticks
+        // Update icon states
         $('.icon').each(function (index) {
             if (index === 0) {
                 $(this).addClass('achieved');
@@ -59,10 +63,10 @@ jQuery(document).ready(function ($) {
         });
     }
 
-    // Initial load
+    // Initial update on page load
     updateProgressBar();
 
-    // Update on cart changes
+    // Update on WooCommerce cart and checkout events
     $(document.body).on('updated_cart_totals updated_checkout', function () {
         updateProgressBar();
     });
