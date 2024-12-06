@@ -6,16 +6,19 @@ jQuery(document).ready(function ($) {
         const giftOneText = smartyCpbSettings.giftOneText;
         const giftTwoText = smartyCpbSettings.giftTwoText;
         const allRewardsText = smartyCpbSettings.allRewardsText;
+		const customTextFormat = smartyCpbSettings.customTextFormat;
 
         let cartTotal = 0;
 
         // Get cart total from checkout or cart page
         if ($('.woocommerce-checkout-review-order-table').length) {
             // Checkout page
-            cartTotal = parseFloat($('.order-total .woocommerce-Price-amount bdi').first().text().replace(/[^0-9.]+/g, ''));
+            const cartTotalText = $('.order-total .woocommerce-Price-amount bdi').first().text();
+            cartTotal = parseFloat(cartTotalText.replace(/[^0-9.,]+/g, '').replace(',', '.'));
         } else if ($('.woocommerce-cart-form').length) {
             // Cart page
-            cartTotal = parseFloat($('.order-total .woocommerce-Price-amount bdi').first().text().replace(/[^0-9.]+/g, ''));
+            const cartTotalText = $('.order-total .woocommerce-Price-amount bdi').first().text();
+            cartTotal = parseFloat(cartTotalText.replace(/[^0-9.,]+/g, '').replace(',', '.'));
         }
 
         if (isNaN(cartTotal)) {
@@ -29,9 +32,11 @@ jQuery(document).ready(function ($) {
         // Determine the info text
         let infoText = '';
         if (cartTotal < giftOneThreshold) {
-            infoText = `Add <span style="color: ${smartyCpbSettings.giftOneColor};">$${remainingToGiftOne}</span> to unlock ${giftOneText}!`;
+            const priceSpan = `<span style="color: ${smartyCpbSettings.giftOneColor};">${remainingToGiftOne} ${smartyCpbSettings.currencySymbol}</span>`;
+            infoText = customTextFormat.replace('%s', priceSpan).replace('%s', giftOneText);
         } else if (cartTotal < giftTwoThreshold) {
-            infoText = `Add <span style="color: ${smartyCpbSettings.giftTwoColor};">$${remainingToGiftTwo}</span> to unlock ${giftTwoText}!`;
+            const priceSpan = `<span style="color: ${smartyCpbSettings.giftTwoColor};">${remainingToGiftTwo} ${smartyCpbSettings.currencySymbol}</span>`;
+            infoText = customTextFormat.replace('%s', priceSpan).replace('%s', giftTwoText);
         } else {
             infoText = `<span style="color: ${smartyCpbSettings.allRewardsColor};">${allRewardsText}</span>`;
         }
@@ -66,8 +71,8 @@ jQuery(document).ready(function ($) {
     // Initial update on page load
     updateProgressBar();
 
-    // Update on WooCommerce cart and checkout events
-    $(document.body).on('updated_cart_totals updated_checkout', function () {
+    // Recalculate progress bar on WooCommerce cart and checkout updates
+    $(document.body).on('updated_cart_totals updated_checkout updated_shipping_method', function () {
         updateProgressBar();
     });
 });

@@ -59,12 +59,14 @@ if (!function_exists('smarty_cpb_enqueue_public_scripts')) {
     
             // Pass thresholds and dynamic texts to JavaScript
             wp_localize_script('smarty-cpb-public-js', 'smartyCpbSettings', array(
-                'giftOneThreshold' => floatval(get_option('smarty_cpb_gift_one_threshold', 100)),
-                'giftTwoThreshold' => floatval(get_option('smarty_cpb_gift_two_threshold', 200)),
-                'giftOneText' => get_option('smarty_cpb_gift_one_text', 'Free Shipping'),
-                'giftTwoText' => get_option('smarty_cpb_gift_two_text', 'Free Gift'),
-                'allRewardsText' => get_option('smarty_cpb_all_rewards_text', 'Congratulations! You have unlocked all rewards!')
-            ));
+				'giftOneThreshold' => floatval(get_option('smarty_cpb_gift_one_threshold', 100)),
+				'giftTwoThreshold' => floatval(get_option('smarty_cpb_gift_two_threshold', 200)),
+				'giftOneText' => get_option('smarty_cpb_gift_one_text', 'Free Shipping'),
+				'giftTwoText' => get_option('smarty_cpb_gift_two_text', 'Free Gift'),
+				'allRewardsText' => get_option('smarty_cpb_all_rewards_text', 'Congratulations! You have unlocked all rewards!'),
+				'currencySymbol' => get_woocommerce_currency_symbol(get_woocommerce_currency()),
+				'customTextFormat' => get_option('smarty_cpb_info_text', 'Add %s to unclock %s!')
+			));
         }
     }
     add_action('wp_enqueue_scripts', 'smarty_cpb_enqueue_public_scripts');
@@ -500,7 +502,7 @@ if (!function_exists('smarty_cpb_public_css')) {
 
             #smarty-cpb .smarty-cpb-info-text {
                 font-size: {$info_text_font_size}px;
-                color: {$text_color};
+                color: {$icon_text_color};
                 text-align: center;
                 margin-bottom: 10px;
             }
@@ -602,9 +604,15 @@ if (!function_exists('smarty_cpb_progress_bar_shortcode')) {
         // Get thresholds
         $gift_one_threshold = floatval(get_option('smarty_cpb_gift_one_threshold', 100));
         $gift_two_threshold = floatval(get_option('smarty_cpb_gift_two_threshold', 200));
+        //error_log('Gift One Threshold: ' . $gift_one_threshold);
+        //error_log('Gift Two Threshold: ' . $gift_two_threshold);
 
+        $currency = get_woocommerce_currency();
+        //error_log('Currency: ' . $currency);
+        
         // Get the current cart total
-        $cart_total = WC()->cart->get_cart_contents_total();
+        $cart_total = floatval(WC()->cart->get_total('edit')); // Includes discounts and taxes
+        //error_log('Cart Total: ' . $cart_total);
 
         // Calculate remaining amounts
         $remaining_to_gift_one = max($gift_one_threshold - $cart_total, 0);
@@ -622,6 +630,7 @@ if (!function_exists('smarty_cpb_progress_bar_shortcode')) {
 
         // Calculate progress percentage
         $progress = min(($cart_total / $gift_two_threshold) * 100, 100);
+        //error_log('Progress Percentage: ' . $progress);
 
         // Build the HTML for the progress bar
         ob_start();
