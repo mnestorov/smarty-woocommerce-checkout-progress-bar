@@ -35,6 +35,27 @@ if (!function_exists('smarty_cpb_register_settings_page')) {
     add_action('admin_menu', 'smarty_cpb_register_settings_page');
 }
 
+if (!function_exists('smarty_cpb_enqueue_admin_scripts')) {
+    /**
+     * Enqueue plugin styles and scripts for the admin-facing side.
+     *
+     * @return void
+     */
+    function smarty_cpb_enqueue_admin_scripts($hook) {
+        if ($hook === 'woocommerce_page_smarty-cpb-settings') {
+            wp_enqueue_media();
+            wp_enqueue_script(
+                'smarty-cpb-admin-js',
+                plugin_dir_url(__FILE__) . 'js/smarty-cpb-admin.js',
+                array('jquery'),
+                null,
+                true
+            );
+        }
+    }
+    add_action('admin_enqueue_scripts', 'smarty_cpb_enqueue_admin_scripts');
+}
+
 if (!function_exists('smarty_cpb_enqueue_public_scripts')) {
     /**
      * Enqueue plugin styles and scripts for the public-facing side.
@@ -92,6 +113,9 @@ if (!function_exists('smarty_cpb_register_settings')) {
         register_setting('smarty_cpb_settings_group', 'smarty_cpb_gift_one_text');
         register_setting('smarty_cpb_settings_group', 'smarty_cpb_gift_two_text');
 
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_gift_one_icon');
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_gift_two_icon');
+
         register_setting('smarty_cpb_settings_group', 'smarty_cpb_info_text_font_size');
         register_setting('smarty_cpb_settings_group', 'smarty_cpb_icon_size');
         register_setting('smarty_cpb_settings_group', 'smarty_cpb_icon_text_font_size');
@@ -128,6 +152,13 @@ if (!function_exists('smarty_cpb_register_settings')) {
             'smarty_cpb_texts_section',
             __('Texts', 'smarty-woocommerce-checkout-progress-bar'),
             'smarty_cpb_texts_section_cb',
+            'smarty_cpb_settings'
+        );
+
+        add_settings_section(
+            'smarty_cpb_custom_icons_section',
+            __('Custom Icons', 'smarty-woocommerce-checkout-progress-bar'),
+            'smarty_cpb_custom_icons_section_cb',
             'smarty_cpb_settings'
         );
 
@@ -199,6 +230,24 @@ if (!function_exists('smarty_cpb_register_settings')) {
             'smarty_cpb_settings',
             'smarty_cpb_texts_section',
             array('id' => 'smarty_cpb_gift_two_text', 'default' => 'Gift Two')
+        );
+
+        add_settings_field(
+            'smarty_cpb_gift_one_icon',
+            __('Gift One Icon', 'smarty-woocommerce-checkout-progress-bar'),
+            'smarty_cpb_upload_input_cb',
+            'smarty_cpb_settings',
+            'smarty_cpb_custom_icons_section',
+            array('id' => 'smarty_cpb_gift_one_icon', 'description' => 'Upload a custom icon for Gift One.')
+        );
+        
+        add_settings_field(
+            'smarty_cpb_gift_two_icon',
+            __('Gift Two Icon', 'smarty-woocommerce-checkout-progress-bar'),
+            'smarty_cpb_upload_input_cb',
+            'smarty_cpb_settings',
+            'smarty_cpb_custom_icons_section',
+            array('id' => 'smarty_cpb_gift_two_icon', 'description' => 'Upload a custom icon for Gift Two.')
         );
 
         add_settings_section(
@@ -339,6 +388,26 @@ if (!function_exists('smarty_cpb_text_input_cb')) {
     function smarty_cpb_text_input_cb($args) {
         $option = get_option($args['id'], $args['default']);
         printf('<input type="text" id="%s" name="%s" value="%s" class="regular-text" />', esc_attr($args['id']), esc_attr($args['id']), esc_attr($option));
+    }
+}
+
+if (!function_exists('smarty_cpb_custom_icons_section_cb')) {
+    function smarty_cpb_custom_icons_section_cb() {
+        echo '<p>' . __('Upload the custom icons for the Gifts.', 'smarty-woocommerce-checkout-progress-bar') . '</p>';
+    }
+}
+
+if (!function_exists('smarty_cpb_upload_input_cb')) {
+    function smarty_cpb_upload_input_cb($args) {
+        $option = get_option($args['id'], '');
+        ?>
+        <input type="url" id="<?php echo esc_attr($args['id']); ?>" name="<?php echo esc_attr($args['id']); ?>" value="<?php echo esc_url($option); ?>" class="regular-text" />
+        <button type="button" class="button smarty-cpb-upload-button" data-target="#<?php echo esc_attr($args['id']); ?>"><?php _e('Upload', 'smarty-woocommerce-checkout-progress-bar'); ?></button>
+        <button type="button" class="button smarty-cpb-remove-button" data-target="#<?php echo esc_attr($args['id']); ?>"><?php _e('Remove', 'smarty-woocommerce-checkout-progress-bar'); ?></button>
+        <?php if (!empty($args['description'])) : ?>
+            <p class="description"><?php echo esc_html($args['description']); ?></p>
+        <?php endif; ?>
+        <?php
     }
 }
 
@@ -546,7 +615,7 @@ if (!function_exists('smarty_cpb_public_css')) {
             #smarty-cpb .smarty-cpb-progress-icons .icon span.gift-text {
                 font-size: {$icon_text_font_size}px;
                 color: {$icon_text_color};
-                margin-top: -5px;
+                margin-top: 0;
             }
 
             #smarty-cpb .smarty-cpb-progress-icons .icon.achieved span.gift-text {
@@ -632,6 +701,16 @@ if (!function_exists('smarty_cpb_progress_bar_shortcode')) {
         $progress = min(($cart_total / $gift_two_threshold) * 100, 100);
         //error_log('Progress Percentage: ' . $progress);
 
+        $custom_gift_one_icon = get_option('smarty_cpb_gift_one_icon', '');
+        $custom_gift_two_icon = get_option('smarty_cpb_gift_two_icon', '');
+
+        $gift_one_icon = $custom_gift_one_icon 
+            ? '<img src="' . esc_url($custom_gift_one_icon) . '" alt="' . esc_attr($gift_one_text) . '" width="75" />' 
+            : '<i class="bi bi-truck"></i>';
+        $gift_two_icon = $custom_gift_two_icon 
+            ? '<img src="' . esc_url($custom_gift_two_icon) . '" alt="' . esc_attr($gift_two_text) . '" width="75" />' 
+            : '<i class="bi bi-gift"></i>';
+
         // Build the HTML for the progress bar
         ob_start();
         ?>
@@ -649,11 +728,11 @@ if (!function_exists('smarty_cpb_progress_bar_shortcode')) {
                         <span>&nbsp;</span>
                     </div>
                     <div class="icon gift-one <?php echo $cart_total >= $gift_one_threshold ? 'achieved' : ''; ?>">
-                        <i class="bi bi-truck"></i>
+                        <?php echo $gift_one_icon; ?>
                         <span class="gift-text"><?php echo esc_html($gift_one_text); ?></span>
                     </div>
                     <div class="icon gift-two <?php echo $cart_total >= $gift_two_threshold ? 'achieved' : ''; ?>">
-                        <i class="bi bi-gift"></i>
+                        <?php echo $gift_two_icon; ?>
                         <span class="gift-text"><?php echo esc_html($gift_two_text); ?></span>
                     </div>
                 </div>
