@@ -641,7 +641,7 @@ if (!function_exists('smarty_cpb_public_css')) {
 
             @media only screen and (max-width: 600px) {
                 #smarty-cpb .smarty-cpb-progress-icons {
-                    top: 45px !important;
+                    top: 70px !important;
                 }
             }
         ";
