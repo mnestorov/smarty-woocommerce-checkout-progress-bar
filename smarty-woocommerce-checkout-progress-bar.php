@@ -706,10 +706,10 @@ if (!function_exists('smarty_cpb_progress_bar_shortcode')) {
 
         $gift_one_icon = $custom_gift_one_icon 
             ? '<img src="' . esc_url($custom_gift_one_icon) . '" alt="' . esc_attr($gift_one_text) . '" width="75" />' 
-            : '<i class="bi bi-truck"></i>';
+            : '<i class="bi bi-truck" style="margin: -7px -12px;"></i>';
         $gift_two_icon = $custom_gift_two_icon 
             ? '<img src="' . esc_url($custom_gift_two_icon) . '" alt="' . esc_attr($gift_two_text) . '" width="75" />' 
-            : '<i class="bi bi-gift"></i>';
+            : '<i class="bi bi-gift" style="margin: -7px -12px;"></i>';
 
         // Build the HTML for the progress bar
         ob_start();
@@ -730,10 +730,12 @@ if (!function_exists('smarty_cpb_progress_bar_shortcode')) {
                     <div class="icon gift-one <?php echo $cart_total >= $gift_one_threshold ? 'achieved' : ''; ?>">
                         <?php echo $gift_one_icon; ?>
                         <span class="gift-text"><?php echo esc_html($gift_one_text); ?></span>
+                        <small style="font-size: 60%; color: #5e5C64;"><b>над 100 лв</b></small>
                     </div>
                     <div class="icon gift-two <?php echo $cart_total >= $gift_two_threshold ? 'achieved' : ''; ?>">
                         <?php echo $gift_two_icon; ?>
                         <span class="gift-text"><?php echo esc_html($gift_two_text); ?></span>
+                        <small style="font-size: 60%; color: #5e5C64;"><b>над 200 лв</b></small>
                     </div>
                 </div>
             </div>
