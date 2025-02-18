@@ -3,7 +3,7 @@
  * Plugin Name: SM - WooCommerce Checkout Progress Bar
  * Plugin URI:  https://github.com/mnestorov/smarty-woocommerce-checkout-progress-bar
  * Description: Adds a progress bar to the WooCommerce checkout page indicating free delivery and free gift eligibility.
- * Version:     1.0.0
+ * Version:     1.0.1
  * Author:      Smarty Studio | Martin Nestorov
  * Author URI:  https://github.com/mnestorov
  * License:     GPL-2.0+
@@ -659,6 +659,20 @@ if (!function_exists('smarty_cpb_progress_bar_shortcode')) {
      * @return string HTML for the progress bar.
      */
     function smarty_cpb_progress_bar_shortcode() {
+        // Check if WooCommerce and cart exist
+        if (!function_exists('WC') || !WC()->cart) {
+            return ''; // Return empty string to prevent errors
+        }
+
+        if (is_admin() && !wp_doing_ajax()) {
+            return ''; // Avoid running in admin area unless it's an AJAX request
+        }
+
+        // Check if the WooCommerce session is initialized
+        if (WC()->cart->is_empty()) {
+            return ''; // Return empty string if the cart is empty
+        }
+
         // Check if the plugin is enabled
         if (get_option('smarty_cpb_enable_progressbar', '1') !== '1') {
             return ''; // Or return a message like: return '<p>Progress bar is disabled.</p>';
@@ -673,6 +687,7 @@ if (!function_exists('smarty_cpb_progress_bar_shortcode')) {
         // Get thresholds
         $gift_one_threshold = floatval(get_option('smarty_cpb_gift_one_threshold', 100));
         $gift_two_threshold = floatval(get_option('smarty_cpb_gift_two_threshold', 200));
+        $cart_total = WC()->cart ? floatval(WC()->cart->get_total('edit')) : 0;
         //error_log('Gift One Threshold: ' . $gift_one_threshold);
         //error_log('Gift Two Threshold: ' . $gift_two_threshold);
 
