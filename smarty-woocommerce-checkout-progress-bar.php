@@ -44,12 +44,16 @@ if (!function_exists('smarty_cpb_enqueue_admin_scripts')) {
     function smarty_cpb_enqueue_admin_scripts($hook) {
         if ($hook === 'woocommerce_page_smarty-cpb-settings') {
             wp_enqueue_media();
-            wp_enqueue_script(
+            wp_enqueue_style('smarty-cpb-admin-css', plugin_dir_url(__FILE__) . 'css/smarty-cpb-admin.css', array(), '1.0.1');
+            wp_enqueue_script('smarty-cpb-admin-js', plugin_dir_url(__FILE__) . 'js/smarty-cpb-admin.js', array('jquery'), '1.0.1', true);
+            wp_localize_script(
                 'smarty-cpb-admin-js',
-                plugin_dir_url(__FILE__) . 'js/smarty-cpb-admin.js',
-                array('jquery'),
-                null,
-                true
+                'smartyCheckoutProgressBar',
+                array(
+                    'ajaxUrl' => admin_url('admin-ajax.php'),
+                    'siteUrl' => site_url(),
+                    'nonce'   => wp_create_nonce('smarty_checkout_progress_bar_nonce'),
+                )
             );
         }
     }
@@ -349,13 +353,43 @@ if (!function_exists('smarty_cpb_settings_page_content')) {
         ?>
         <div class="wrap">
             <h1><?php _e('Checkout Progress Bar | Settings', 'smarty-woocommerce-checkout-progress-bar'); ?></h1>
-            <form method="post" action="options.php">
-                <?php
-                settings_fields('smarty_cpb_settings_group');
-                do_settings_sections('smarty_cpb_settings');
-                submit_button();
-                ?>
-            </form>
+            <div id="smarty-cpb-settings-container">
+                <div>
+                    <form method="post" action="options.php">
+                        <?php
+                        settings_fields('smarty_cpb_settings_group');
+                        do_settings_sections('smarty_cpb_settings');
+                        submit_button();
+                        ?>
+                    </form>
+                </div>
+                <div id="smarty-cpb-tabs-container">
+                    <div>
+                        <h2 class="smarty-cpb-nav-tab-wrapper">
+                            <a href="#smarty-cpb-documentation" class="smarty-cpb-nav-tab smarty-cpb-nav-tab-active"><?php esc_html_e('Documentation', 'smarty-woocommerce-checkout-progress-bar'); ?></a>
+                            <a href="#smarty-cpb-changelog" class="smarty-cpb-nav-tab"><?php esc_html_e('Changelog', 'smarty-woocommerce-checkout-progress-bar'); ?></a>
+                        </h2>
+                        <div id="smarty-cpb-documentation" class="smarty-cpb-tab-content active">
+                            <div class="smarty-cpb-view-more-container">
+                                <p><?php esc_html_e('Click "View More" to load the plugin documentation.', 'smarty-woocommerce-checkout-progress-bar'); ?></p>
+                                <button id="smarty-cpb-load-readme-btn" class="button button-primary">
+                                    <?php esc_html_e('View More', 'smarty-woocommerce-checkout-progress-bar'); ?>
+                                </button>
+                            </div>
+                            <div id="smarty-cpb-readme-content" style="margin-top: 20px;"></div>
+                        </div>
+                        <div id="smarty-cpb-changelog" class="smarty-cpb-tab-content">
+                            <div class="smarty-cpb-view-more-container">
+                                <p><?php esc_html_e('Click "View More" to load the plugin changelog.', 'smarty-woocommerce-checkout-progress-bar'); ?></p>
+                                <button id="smarty-cpb-load-changelog-btn" class="button button-primary">
+                                    <?php esc_html_e('View More', 'smarty-woocommerce-checkout-progress-bar'); ?>
+                                </button>
+                            </div>
+                            <div id="smarty-cpb-changelog-content" style="margin-top: 20px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
         <?php
     }
@@ -759,4 +793,66 @@ if (!function_exists('smarty_cpb_progress_bar_shortcode')) {
         return ob_get_clean();
     }
     add_shortcode('smarty_cpb_progress_bar', 'smarty_cpb_progress_bar_shortcode');
+}
+
+if (!function_exists('smarty_cpb_load_readme')) {
+    /**
+     * AJAX handler to load and parse the README.md content.
+     */
+    function smarty_cpb_load_readme() {
+        check_ajax_referer('smarty_checkout_progress_bar_nonce', 'nonce');
+    
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('You do not have sufficient permissions.');
+        }
+    
+        $readme_path = plugin_dir_path(__FILE__) . 'README.md';
+        if (file_exists($readme_path)) {
+            // Include Parsedown library
+            if (!class_exists('Parsedown')) {
+                require_once plugin_dir_path(__FILE__) . 'libs/Parsedown.php';
+            }
+    
+            $parsedown = new Parsedown();
+            $markdown_content = file_get_contents($readme_path);
+            $html_content = $parsedown->text($markdown_content);
+    
+            // Remove <img> tags from the content
+            $html_content = preg_replace('/<img[^>]*>/', '', $html_content);
+    
+            wp_send_json_success($html_content);
+        } else {
+            wp_send_json_error('README.md file not found.');
+        }
+    }    
+    add_action('wp_ajax_smarty_cpb_load_readme', 'smarty_cpb_load_readme');
+}
+
+if (!function_exists('smarty_cpb_load_changelog')) {
+    /**
+     * AJAX handler to load and parse the CHANGELOG.md content.
+     */
+    function smarty_cpb_load_changelog() {
+        check_ajax_referer('smarty_checkout_progress_bar_nonce', 'nonce');
+    
+        if (!current_user_can('manage_options')) {
+            wp_send_json_error('You do not have sufficient permissions.');
+        }
+    
+        $changelog_path = plugin_dir_path(__FILE__) . 'CHANGELOG.md';
+        if (file_exists($changelog_path)) {
+            if (!class_exists('Parsedown')) {
+                require_once plugin_dir_path(__FILE__) . 'libs/Parsedown.php';
+            }
+    
+            $parsedown = new Parsedown();
+            $markdown_content = file_get_contents($changelog_path);
+            $html_content = $parsedown->text($markdown_content);
+    
+            wp_send_json_success($html_content);
+        } else {
+            wp_send_json_error('CHANGELOG.md file not found.');
+        }
+    }
+    add_action('wp_ajax_smarty_cpb_load_changelog', 'smarty_cpb_load_changelog');
 }
