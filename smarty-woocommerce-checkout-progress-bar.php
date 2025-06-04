@@ -446,8 +446,13 @@ if (!function_exists('smarty_cpb_texts_section_cb')) {
 
 if (!function_exists('smarty_cpb_text_input_cb')) {
     function smarty_cpb_text_input_cb($args) {
-        $option = preg_replace('/[^0-9.]/', '', get_option($args['id'], $args['default']));
-        printf('<input type="text" id="%s" name="%s" value="%s" class="regular-text" />', esc_attr($args['id']), esc_attr($args['id']), esc_attr($option));
+        $option = get_option($args['id'], $args['default']);
+        printf(
+            '<input type="text" id="%s" name="%s" value="%s" class="regular-text" />',
+            esc_attr($args['id']),
+            esc_attr($args['id']),
+            esc_attr($option)
+        );
     }
 }
 
