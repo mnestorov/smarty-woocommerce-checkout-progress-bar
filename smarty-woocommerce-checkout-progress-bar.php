@@ -3,7 +3,7 @@
  * Plugin Name: SM - WooCommerce Checkout Progress Bar
  * Plugin URI:  https://github.com/mnestorov/smarty-woocommerce-checkout-progress-bar
  * Description: Adds a progress bar to the WooCommerce checkout page indicating free delivery and free gift eligibility.
- * Version:     1.0.1
+ * Version:     1.0.2
  * Author:      Smarty Studio | Martin Nestorov
  * Author URI:  https://github.com/mnestorov
  * License:     GPL-2.0+
@@ -44,8 +44,8 @@ if (!function_exists('smarty_cpb_enqueue_admin_scripts')) {
     function smarty_cpb_enqueue_admin_scripts($hook) {
         if ($hook === 'woocommerce_page_smarty-cpb-settings') {
             wp_enqueue_media();
-            wp_enqueue_style('smarty-cpb-admin-css', plugin_dir_url(__FILE__) . 'css/smarty-cpb-admin.css', array(), '1.0.1');
-            wp_enqueue_script('smarty-cpb-admin-js', plugin_dir_url(__FILE__) . 'js/smarty-cpb-admin.js', array('jquery'), '1.0.1', true);
+            wp_enqueue_style('smarty-cpb-admin-css', plugin_dir_url(__FILE__) . 'css/smarty-cpb-admin.css', array(), '1.0.2');
+            wp_enqueue_script('smarty-cpb-admin-js', plugin_dir_url(__FILE__) . 'js/smarty-cpb-admin.js', array('jquery'), '1.0.2', true);
             wp_localize_script(
                 'smarty-cpb-admin-js',
                 'smartyCheckoutProgressBar',
@@ -116,13 +116,21 @@ if (!function_exists('smarty_cpb_register_settings')) {
         register_setting('smarty_cpb_settings_group', 'smarty_cpb_all_rewards_text');
         register_setting('smarty_cpb_settings_group', 'smarty_cpb_gift_one_text');
         register_setting('smarty_cpb_settings_group', 'smarty_cpb_gift_two_text');
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_gift_one_threshold_text');
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_gift_two_threshold_text');
 
         register_setting('smarty_cpb_settings_group', 'smarty_cpb_gift_one_icon');
         register_setting('smarty_cpb_settings_group', 'smarty_cpb_gift_two_icon');
 
-        register_setting('smarty_cpb_settings_group', 'smarty_cpb_info_text_font_size');
-        register_setting('smarty_cpb_settings_group', 'smarty_cpb_icon_size');
-        register_setting('smarty_cpb_settings_group', 'smarty_cpb_icon_text_font_size');
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_info_text_font_size', array(
+            'sanitize_callback' => 'absint'
+        ));
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_icon_size', array(
+            'sanitize_callback' => 'absint'
+        ));
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_icon_text_font_size', array(
+            'sanitize_callback' => 'absint'
+        ));
         
         register_setting('smarty_cpb_settings_group', 'smarty_cpb_info_text_color');
         register_setting('smarty_cpb_settings_group', 'smarty_cpb_progress_fill_color');
@@ -234,6 +242,24 @@ if (!function_exists('smarty_cpb_register_settings')) {
             'smarty_cpb_settings',
             'smarty_cpb_texts_section',
             array('id' => 'smarty_cpb_gift_two_text', 'default' => 'Gift Two')
+        );
+
+        add_settings_field(
+            'smarty_cpb_gift_one_threshold_text',
+            __('Gift One Threshold Label', 'smarty-woocommerce-checkout-progress-bar'),
+            'smarty_cpb_text_input_cb',
+            'smarty_cpb_settings',
+            'smarty_cpb_texts_section',
+            array('id' => 'smarty_cpb_gift_one_threshold_text', 'default' => 'Над 100 лв')
+        );
+
+        add_settings_field(
+            'smarty_cpb_gift_two_threshold_text',
+            __('Gift Two Threshold Label', 'smarty-woocommerce-checkout-progress-bar'),
+            'smarty_cpb_text_input_cb',
+            'smarty_cpb_settings',
+            'smarty_cpb_texts_section',
+            array('id' => 'smarty_cpb_gift_two_threshold_text', 'default' => 'Над 200 лв')
         );
 
         add_settings_field(
@@ -472,7 +498,7 @@ if (!function_exists('smarty_cpb_slider_input_cb')) {
         $step = isset($args['step']) ? $args['step'] : '1';
 
         printf(
-            '<input type="range" id="%s" name="%s" value="%s" min="%s" max="%s" step="%s" oninput="document.getElementById(\'%s-output\').innerText = this.value;" />',
+            '<input type="range" id="%s" name="%s" value="%s" min="%s" max="%s" step="%s" oninput="document.getElementById(\'%s-output\').innerText = this.value + \"px\";" />',
             esc_attr($args['id']),
             esc_attr($args['id']),
             esc_attr($option),
@@ -498,7 +524,7 @@ if (!function_exists('smarty_cpb_thresholds_section_cb')) {
 
 if (!function_exists('smarty_cpb_number_input_cb')) {
     function smarty_cpb_number_input_cb($args) {
-        $option = get_option($args['id'], $args['default']);
+        $option = preg_replace('/[^0-9.]/', '', get_option($args['id'], $args['default']));
         printf('<input type="number" id="%s" name="%s" value="%s" step="1" />', esc_attr($args['id']), esc_attr($args['id']), esc_attr($option));
     }
 }
@@ -582,11 +608,11 @@ if (!function_exists('smarty_cpb_public_css')) {
         $info_text = get_option('smarty_cpb_info_text', 'Add $XX.XX to unlock XX!');
         $all_rewards_text = get_option('smarty_cpb_all_rewards_text', 'Congratulations! You have unlocked all rewards!');
         
-        $info_text_font_size = get_option('smarty_cpb_info_text_font_size', '12px');
+        $info_text_font_size = preg_replace('/[^0-9.]/', '', get_option('smarty_cpb_info_text_font_size', '12'));
         $info_text_color = get_option('smarty_cpb_info_text_color', '#333333');
 
-        $icon_size = get_option('smarty_cpb_icon_size', '24px');
-        $icon_text_font_size = get_option('smarty_cpb_icon_text_font_size', '14px');
+        $icon_size = preg_replace('/[^0-9.]/', '', get_option('smarty_cpb_icon_size', '24'));
+        $icon_text_font_size = preg_replace('/[^0-9.]/', '', get_option('smarty_cpb_icon_text_font_size', '14'));
         $icon_text_color = get_option('smarty_cpb_icon_text_color', '#888');
         $icon_color_achieved = get_option('smarty_cpb_icon_achieved_color', '#4caf50');
         $icon_color_not_achieved = get_option('smarty_cpb_icon_not_achieved_color', '#cccccc');
@@ -721,6 +747,9 @@ if (!function_exists('smarty_cpb_progress_bar_shortcode')) {
         // Get thresholds
         $gift_one_threshold = floatval(get_option('smarty_cpb_gift_one_threshold', 100));
         $gift_two_threshold = floatval(get_option('smarty_cpb_gift_two_threshold', 200));
+
+        $gift_one_threshold_text = get_option('smarty_cpb_gift_one_threshold_text', 'Над ' . $gift_one_threshold . ' лв');
+        $gift_two_threshold_text = get_option('smarty_cpb_gift_two_threshold_text', 'Над ' . $gift_two_threshold . ' лв');
         $cart_total = WC()->cart ? floatval(WC()->cart->get_total('edit')) : 0;
         //error_log('Gift One Threshold: ' . $gift_one_threshold);
         //error_log('Gift Two Threshold: ' . $gift_two_threshold);
@@ -779,12 +808,12 @@ if (!function_exists('smarty_cpb_progress_bar_shortcode')) {
                     <div class="icon gift-one <?php echo $cart_total >= $gift_one_threshold ? 'achieved' : ''; ?>">
                         <?php echo $gift_one_icon; ?>
                         <span class="gift-text"><?php echo esc_html($gift_one_text); ?></span>
-                        <small style="font-size: 60%; color: #5e5C64;"><b>над 100 лв</b></small>
+                        <small style="font-size: 60%; color: #5e5C64;"><b><?php echo esc_html($gift_one_threshold_text); ?></b></small>
                     </div>
                     <div class="icon gift-two <?php echo $cart_total >= $gift_two_threshold ? 'achieved' : ''; ?>">
                         <?php echo $gift_two_icon; ?>
                         <span class="gift-text"><?php echo esc_html($gift_two_text); ?></span>
-                        <small style="font-size: 60%; color: #5e5C64;"><b>над 200 лв</b></small>
+                        <small style="font-size: 60%; color: #5e5C64;"><b><?php echo esc_html($gift_two_threshold_text); ?></b></small>
                     </div>
                 </div>
             </div>
