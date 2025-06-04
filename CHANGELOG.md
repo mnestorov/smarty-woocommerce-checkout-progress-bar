@@ -13,4 +13,5 @@
 
 ### 1.0.2 (2025.06.04)
 - Threshold labels are now editable from the settings page
+- Move the admin css from the main file to the separate css file: `smarty-cpb-admin.css`
 - Bug fixes
