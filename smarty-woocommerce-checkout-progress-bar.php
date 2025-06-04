@@ -250,7 +250,7 @@ if (!function_exists('smarty_cpb_register_settings')) {
             'smarty_cpb_text_input_cb',
             'smarty_cpb_settings',
             'smarty_cpb_texts_section',
-            array('id' => 'smarty_cpb_gift_one_threshold_text', 'default' => 'Над 100 лв')
+            array('id' => 'smarty_cpb_gift_one_threshold_text', 'default' => '')
         );
 
         add_settings_field(
@@ -259,7 +259,7 @@ if (!function_exists('smarty_cpb_register_settings')) {
             'smarty_cpb_text_input_cb',
             'smarty_cpb_settings',
             'smarty_cpb_texts_section',
-            array('id' => 'smarty_cpb_gift_two_threshold_text', 'default' => 'Над 200 лв')
+            array('id' => 'smarty_cpb_gift_two_threshold_text', 'default' => '')
         );
 
         add_settings_field(
@@ -748,8 +748,16 @@ if (!function_exists('smarty_cpb_progress_bar_shortcode')) {
         $gift_one_threshold = floatval(get_option('smarty_cpb_gift_one_threshold', 100));
         $gift_two_threshold = floatval(get_option('smarty_cpb_gift_two_threshold', 200));
 
-        $gift_one_threshold_text = get_option('smarty_cpb_gift_one_threshold_text', 'Над ' . $gift_one_threshold . ' лв');
-        $gift_two_threshold_text = get_option('smarty_cpb_gift_two_threshold_text', 'Над ' . $gift_two_threshold . ' лв');
+       $gift_one_threshold_text = get_option(
+	    'smarty_cpb_gift_one_threshold_text',
+	    sprintf(__('Above %s BGN', 'smarty-woocommerce-checkout-progress-bar'), $gift_one_threshold)
+	);
+	
+	$gift_two_threshold_text = get_option(
+	    'smarty_cpb_gift_two_threshold_text',
+	    sprintf(__('Above %s BGN', 'smarty-woocommerce-checkout-progress-bar'), $gift_two_threshold)
+	);
+	    
         $cart_total = WC()->cart ? floatval(WC()->cart->get_total('edit')) : 0;
         //error_log('Gift One Threshold: ' . $gift_one_threshold);
         //error_log('Gift Two Threshold: ' . $gift_two_threshold);
