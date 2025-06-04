@@ -10,3 +10,7 @@
     - Ensures that WooCommerce is fully initialized before running.
     - If the cart is empty, it returns nothing instead of causing errors.
 - Plugin settings page enhancement
+
+### 1.0.2 (2025.06.04)
+- Threshold labels are now editable from the settings page
+- Font size options sanitize numeric values and append "px" only once in CSS
