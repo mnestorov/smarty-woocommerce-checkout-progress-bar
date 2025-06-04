@@ -120,9 +120,15 @@ if (!function_exists('smarty_cpb_register_settings')) {
         register_setting('smarty_cpb_settings_group', 'smarty_cpb_gift_one_icon');
         register_setting('smarty_cpb_settings_group', 'smarty_cpb_gift_two_icon');
 
-        register_setting('smarty_cpb_settings_group', 'smarty_cpb_info_text_font_size');
-        register_setting('smarty_cpb_settings_group', 'smarty_cpb_icon_size');
-        register_setting('smarty_cpb_settings_group', 'smarty_cpb_icon_text_font_size');
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_info_text_font_size', array(
+            'sanitize_callback' => 'absint'
+        ));
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_icon_size', array(
+            'sanitize_callback' => 'absint'
+        ));
+        register_setting('smarty_cpb_settings_group', 'smarty_cpb_icon_text_font_size', array(
+            'sanitize_callback' => 'absint'
+        ));
         
         register_setting('smarty_cpb_settings_group', 'smarty_cpb_info_text_color');
         register_setting('smarty_cpb_settings_group', 'smarty_cpb_progress_fill_color');
@@ -420,7 +426,7 @@ if (!function_exists('smarty_cpb_texts_section_cb')) {
 
 if (!function_exists('smarty_cpb_text_input_cb')) {
     function smarty_cpb_text_input_cb($args) {
-        $option = get_option($args['id'], $args['default']);
+        $option = preg_replace('/[^0-9.]/', '', get_option($args['id'], $args['default']));
         printf('<input type="text" id="%s" name="%s" value="%s" class="regular-text" />', esc_attr($args['id']), esc_attr($args['id']), esc_attr($option));
     }
 }
@@ -472,7 +478,7 @@ if (!function_exists('smarty_cpb_slider_input_cb')) {
         $step = isset($args['step']) ? $args['step'] : '1';
 
         printf(
-            '<input type="range" id="%s" name="%s" value="%s" min="%s" max="%s" step="%s" oninput="document.getElementById(\'%s-output\').innerText = this.value;" />',
+            '<input type="range" id="%s" name="%s" value="%s" min="%s" max="%s" step="%s" oninput="document.getElementById(\'%s-output\').innerText = this.value + \"px\";" />',
             esc_attr($args['id']),
             esc_attr($args['id']),
             esc_attr($option),
@@ -498,7 +504,7 @@ if (!function_exists('smarty_cpb_thresholds_section_cb')) {
 
 if (!function_exists('smarty_cpb_number_input_cb')) {
     function smarty_cpb_number_input_cb($args) {
-        $option = get_option($args['id'], $args['default']);
+        $option = preg_replace('/[^0-9.]/', '', get_option($args['id'], $args['default']));
         printf('<input type="number" id="%s" name="%s" value="%s" step="1" />', esc_attr($args['id']), esc_attr($args['id']), esc_attr($option));
     }
 }
@@ -582,11 +588,11 @@ if (!function_exists('smarty_cpb_public_css')) {
         $info_text = get_option('smarty_cpb_info_text', 'Add $XX.XX to unlock XX!');
         $all_rewards_text = get_option('smarty_cpb_all_rewards_text', 'Congratulations! You have unlocked all rewards!');
         
-        $info_text_font_size = get_option('smarty_cpb_info_text_font_size', '12px');
+        $info_text_font_size = preg_replace('/[^0-9.]/', '', get_option('smarty_cpb_info_text_font_size', '12'));
         $info_text_color = get_option('smarty_cpb_info_text_color', '#333333');
 
-        $icon_size = get_option('smarty_cpb_icon_size', '24px');
-        $icon_text_font_size = get_option('smarty_cpb_icon_text_font_size', '14px');
+        $icon_size = preg_replace('/[^0-9.]/', '', get_option('smarty_cpb_icon_size', '24'));
+        $icon_text_font_size = preg_replace('/[^0-9.]/', '', get_option('smarty_cpb_icon_text_font_size', '14'));
         $icon_text_color = get_option('smarty_cpb_icon_text_color', '#888');
         $icon_color_achieved = get_option('smarty_cpb_icon_achieved_color', '#4caf50');
         $icon_color_not_achieved = get_option('smarty_cpb_icon_not_achieved_color', '#cccccc');
