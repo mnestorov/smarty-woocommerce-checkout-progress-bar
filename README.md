@@ -6,11 +6,6 @@
     - Explore more at [nestorov.dev](https://github.com/mnestorov)
 - **Plugin URI:** https://github.com/mnestorov/smarty-woocommerce-checkout-progress-bar
 
-## Support The Project
-
-Your support is greatly appreciated and will help ensure all of the projects continued development and improvement. Thank you for being a part of the community!
-You can send me money on Revolut by following this link: https://revolut.me/mnestorovv
-
 ## Overview
 
 The Checkout Progress Bar for WooCommerce enhances your checkout page with a visually appealing and fully customizable progress bar. It shows customers their journey toward achieving rewards, such as free shipping or a free gift, encouraging them to increase their cart value.
